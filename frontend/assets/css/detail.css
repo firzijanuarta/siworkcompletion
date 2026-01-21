@@ -1,0 +1,281 @@
+* {
+  box-sizing: border-box;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+body {
+  margin: 0;
+  background: #f5f7fb;
+}
+
+/* HEADER */
+.header {
+  height: 64px;
+  background: #2563eb;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 30px;
+}
+
+.logo {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.logout {
+  background: white;
+  color: #2563eb;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+/* MAIN */
+.main {
+  padding: 30px;
+}
+
+/* ACTION BAR */
+.action-bar {
+  margin-bottom: 20px;
+}
+
+.btn-primary {
+  background: #2fda0d;
+  color: rgb(14, 13, 13);
+  border: none;
+  padding: 12px 22px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.btn-warning {
+  background: #e8eb25;
+  color: white;
+  border: none;
+  padding: 12px 22px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+/* TABLE */
+.table-wrapper {
+  background: white;
+  border-radius: 14px;
+  padding: 20px 10px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+thead {
+  background: #dcdfe2fc;
+}
+
+th, td {
+  padding: 15px 30px;
+  text-align: left;
+  font-size: 14px;
+
+}
+
+th:nth-child(4),
+td:nth-child(4) {
+  width: 60px;
+  text-align: center;
+}
+
+th {
+  font-weight: 600;
+  padding: 15px 30px;
+  text-align: left;
+}
+
+tr:not(:last-child) {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+
+/* STATUS */
+.status {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status.done {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status.progress {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+/* BUTTON */
+.btn-small {
+  background: #1848e8;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  cursor: pointer;
+  color: #010101;
+  font-weight: 500;
+}
+
+.btn-detail {
+  background: #e5e111;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  color: #010101;
+}
+
+.form-card {
+  background: #fff;
+  padding: 25px;
+  max-width: 500px;
+  margin: 30px auto;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.form-card h2 {
+  margin-bottom: 20px;
+}
+
+.form-card label {
+  display: block;
+  margin-top: 15px;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+
+.form-card input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+
+.form-action {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+}
+
+.btn-secondary {
+  background: #ccc;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.error {
+  color: red;
+  margin-top: 10px;
+}
+
+.detail-header {
+  margin-bottom: 20px;
+}
+
+.thumb {
+  width: 80px;
+  margin-right: 5px;
+  border-radius: 4px;
+}
+
+.preview-container {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.preview-container img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+}
+
+.thumb {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 4px;
+  margin-right: 5px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.btn-secondary {
+  background: #ed4040;
+  color: #050202;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.preview-container,
+.doc-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.thumb {
+  width: 80%;
+  height: 300px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+}
+
+.form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.btn-danger {
+  background: #e74c3c;
+  color: rgb(9, 9, 9);
+  border: none;
+  padding: 6px 14px;  
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+th.detail {
+  text-align: center;
+}
+th.deskripsi {
+  text-align: center;
+}
+

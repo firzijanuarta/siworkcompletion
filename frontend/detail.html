@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Detail Laporan</title>
+  <link rel="stylesheet" href="assets/css/detail.css">
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">Work Completion</div>
+  <button id="logoutBtn" class="logout">Logout</button>
+</header>
+
+<main class="main">
+
+  <!-- HEADER DETAIL -->
+  <div class="detail-header">
+    <h2 id="judulLaporan">Detail Laporan</h2>
+    <p id="tanggalLaporan"></p>
+  </div>
+
+  <!-- FORM TAMBAH DETAIL -->
+  <div class="form-card">
+    <h3>Tambah Detail Pekerjaan</h3>
+
+    <form id="detailForm" enctype="multipart/form-data">
+      
+      <label for="deskripsi">Deskripsi</label>
+      <textarea id="deskripsi" rows="3" placeholder="Masukkan deskripsi pekerjaan" required></textarea>
+
+      <label for="dokumentasi">Dokumentasi (boleh lebih dari 1)</label>
+      <input type="file" id="dokumentasi" name="dokumentasi" multiple accept="image/*">
+
+      <small id="fileCount" class="file-count">
+        Belum ada gambar dipilih
+      </small>
+
+      <!-- PREVIEW GAMBAR -->
+      <div id="previewContainer" class="preview-container"></div>
+
+      <!-- ACTION BUTTON -->
+      <div class="form-actions">
+        <button type="submit" class="btn-primary">Tambah Baris</button>
+        <button type="button" id="cancelBtn" class="btn-secondary">Batal</button>
+      </div>
+
+      <p id="errorMsg" class="error"></p>
+    </form>
+  </div>
+
+  <!-- TABEL DETAIL -->
+  <div class="table-wrapper-detail">
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 60px;">No</th>
+          <th class="deskripsi">Deskripsi</th>
+          <th class="detail">Dokumentasi</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody id="detailTableBody"></tbody>
+    </table>
+  </div>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="assets/js/detail.js"></script>
+</body>
+</html>

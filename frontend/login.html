@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Login</title>
+  <link rel="stylesheet" href="assets/css/login.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+
+<div class="container">
+  <div class="left">
+    <img src="assets/img/animasi.png" alt="animasi Login">
+  </div>
+
+  <div class="right">
+    <h2>Sign In</h2>
+
+    <form id="loginForm">
+      <p class="error" id="errorMsg"></p>
+      <input id="username" type="text" placeholder="Username" required>
+      <div class="password-wrapper">
+        <input id="password" type="password" placeholder="Password" required>
+        <span id="togglePassword">
+          <i class="fa-solid fa-eye-slash"></i>
+        </span>
+      </div>
+      <button type="submit">Log In</button>
+      
+    </form>
+  </div>
+</div>
+
+<div id="loadingOverlay" class="loading-overlay">
+  <div class="spinner"></div>
+  <p>Memuat dashboard...</p>
+</div>
+
+<script src="assets/js/login.js"></script>
+
+<script>
+  const user = localStorage.getItem('user')
+  if (user) {
+    window.location.href = 'dashboard.html'
+  }
+</script>
+</body>
+</html>

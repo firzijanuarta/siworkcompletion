@@ -1,0 +1,177 @@
+* {
+  box-sizing: border-box;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+body {
+  margin: 0;
+  height: 100vh;
+  background: #ffffff; /* hilangkan abu */
+}
+
+/* container utama */
+.container {
+  display: flex;
+  width: 90%;
+  max-width: 1200px;
+  height: 80vh;
+  margin: auto;
+  margin-top: 60px;
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden; /* biar satu kesatuan */
+}
+
+/* kiri - gambar */
+.left {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.left img {
+  width: 300%;
+  max-width: 650px;
+}
+
+/* kanan - form */
+.right {
+  flex: 1;
+  padding: 80px 70px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.right h2 {
+  font-size: 32px;
+  margin-bottom: 30px;
+}
+
+.right input {
+  width: 100%;
+  padding: 14px;
+  margin-bottom: 22px;
+  border: none;
+  border-radius: 10px;
+  background: #f3f4f6;
+  font-size: 15px;
+}
+
+.options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  margin-bottom: 30px;
+}
+
+.options a {
+  text-decoration: none;
+  color: #6c63ff;
+}
+
+.error {
+  color: red;
+  margin-top: 10px;
+  font-size: 14px;
+  animation: shake 0.4s;
+}
+
+
+button {
+  width: fit-content;
+  padding: 14px 36px;
+  border: none;
+  border-radius: 10px;
+  background: #1a11d5;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+/* responsive */
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .left {
+    display: none;
+  }
+
+  .right {
+    padding: 50px;
+  }
+}
+
+@keyframes shake {
+  0%   { transform: translateX(0); }
+  25%  { transform: translateX(-5px); }
+  50%  { transform: translateX(5px); }
+  75%  { transform: translateX(-5px); }
+  100% { transform: translateX(0); }
+}
+
+.password-wrapper {
+  position: relative;
+}
+
+.password-wrapper input {
+  width: 100%;
+  padding-right: 40px;
+}
+
+#togglePassword {
+  position: absolute;
+  right: 12px;
+  top: 34%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  user-select: none;
+  font-size: 15px;
+  opacity: 0.6;
+}
+
+#togglePassword:hover {
+  opacity: 1;
+}
+
+/* LOADING OVERLAY */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.9);
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.loading-overlay.active {
+  display: flex;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #e5e7eb;
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 12px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-overlay p {
+  font-size: 14px;
+  color: #374151;
+}

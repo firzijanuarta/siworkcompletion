@@ -1,0 +1,193 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+body {
+  background: linear-gradient(120deg, #f8fafc, #eef2ff);
+  min-height: 100vh;
+}
+
+/* HEADER */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 32px;
+  background: white;
+  min-height: 64px;
+}
+
+.logo {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.btn-login {
+  background: #070edf;
+  color: white;
+  padding: 10px 26px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+/* HERO */
+.hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 80px 60px;
+  gap: 50px;
+}
+
+.hero-text {
+  max-width: 500px;
+}
+
+.hero-text h1 {
+  font-size: 46px;
+  font-weight: 800;
+  margin-bottom: 20px;
+}
+
+.hero-text p {
+  font-size: 16px;
+  line-height: 1.7;
+  color: #475569;
+}
+
+/* SLIDER */
+.hero-slider {
+  position: relative;
+  width: 520px;
+  height: 360px;
+  overflow: hidden;
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+
+.slider-track {
+  display: flex;
+  height: 100%;
+  transition: transform 0.6s ease;
+}
+
+.slider-track img {
+  width: 520px;
+  height: 360px;
+  object-fit: cover;
+}
+
+/* BUTTON */
+.nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0,0,0,0.4);
+  color: white;
+  border: none;
+  font-size: 22px;
+  padding: 10px 14px;
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.nav:hover {
+  background: rgba(0,0,0,0.6);
+}
+
+.prev {
+  left: 15px;
+}
+
+.next {
+  right: 15px;
+}
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .hero {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .hero-slider {
+    width: 100%;
+    height: 260px;
+  }
+
+  .slider-track img {
+    width: 100%;
+    height: 260px;
+  }
+}
+
+/* BRAND HEADER */
+.brand {
+  display: flex;
+  align-items: center;
+}
+
+.brand-text {
+  font-size: 18px;
+  font-weight: 700;
+  margin-right: 31px;
+  white-space: nowrap;
+}
+
+.logo-img.left {
+  height: 50px; /* 🔥 rapat */
+}
+
+.logo-img.right {
+  height: 40px;
+  margin-right: 32px;
+  margin-bottom: 3px;
+}
+
+.logo-img-tara {
+  height: 35px;
+  margin-top: 6px;
+}
+
+/* LOGO IMAGE */
+.logo-img {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+}
+
+.logo-img-left {
+  height: 60px;
+  width: auto;
+  object-fit: contain;
+  
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .brand-text {
+    font-size: 16px;
+  }
+
+  .logo-img {
+    height: 30px;
+  }
+}
+
+.page {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: pageFadeIn 0.8s ease-out forwards;
+  animation-delay: 0.15s;
+}
+
+@keyframes pageFadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

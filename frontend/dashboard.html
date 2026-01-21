@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="assets/css/dashboard.css">
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="logo">Work Completion</div>
+    <button id="logoutBtn" class="logout">Logout</button>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+
+    <!-- ACTION BAR -->
+    <div class="action-bar">
+      <button class="btn-primary" onclick="goTambah()">+ Tambah Laporan</button>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>Judul Laporan</th>
+            <th>Tanggal</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="reportTableBody">
+          <!-- data dari backend -->
+        </tbody>
+      </table>
+
+      <!-- 🔥 PAGINATION -->
+      <div class="pagination" id="pagination"></div>
+    </div>
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="assets/js/dashboard.js"></script>
+
+</body>
+</html>
