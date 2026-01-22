@@ -9,17 +9,15 @@ const authRoutes = require('./routes/auth')
 const app = express()
 const PORT = process.env.PORT || 3000
 
-/* ===== CORS (PRODUCTION FIX) ===== */
+/* ===== CORS CONFIG (SAFE FOR NETLIFY + RAILWAY) ===== */
 app.use(cors({
   origin: [
     'https://dapper-kleicha-a75f5a.netlify.app',
     'https://siworkcompletion-production.up.railway.app'
   ],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }))
-app.options('*', cors())
 
 /* ===== BODY PARSER ===== */
 app.use(express.json())
