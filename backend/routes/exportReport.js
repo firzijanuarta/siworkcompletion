@@ -3,7 +3,6 @@ const router = express.Router()
 const db = require('../config/db')
 const fs = require('fs')
 const path = require('path')
-const axios = require('axios')
 
 const {
   Document,
@@ -52,11 +51,10 @@ router.get('/reports/:id/export', async (req, res) => {
               .json({ message: 'Gagal mengambil detail laporan' })
           }
 
-          /* ================= HEADER (GAMBAR) ================= */
+          /* ================= HEADER ================= */
           const headerSection = new Header({
             children: [
               new Paragraph({
-                alignment: AlignmentType.LEFT,
                 children: [
                   new ImageRun({
                     data: fs.readFileSync(
@@ -65,31 +63,22 @@ router.get('/reports/:id/export', async (req, res) => {
                         '../../frontend/assets/img/header.png'
                       )
                     ),
-                    transformation: {
-                      width: 340,
-                      height: 77
-                    }
+                    transformation: { width: 340, height: 77 }
                   })
                 ]
               })
             ]
           })
 
-          /* ================= TABEL DETAIL ================= */
+          /* ================= TABEL ================= */
           const tableRows = []
 
           tableRows.push(
             new TableRow({
               children: [
-                new TableCell({
-                  children: [new Paragraph({ text: 'No', bold: true })]
-                }),
-                new TableCell({
-                  children: [new Paragraph({ text: 'Deskripsi', bold: true })]
-                }),
-                new TableCell({
-                  children: [new Paragraph({ text: 'Dokumentasi', bold: true })]
-                })
+                new TableCell({ children: [new Paragraph('No')] }),
+                new TableCell({ children: [new Paragraph('Deskripsi')] }),
+                new TableCell({ children: [new Paragraph('Dokumentasi')] })
               ]
             })
           )
@@ -97,46 +86,27 @@ router.get('/reports/:id/export', async (req, res) => {
           for (const item of details) {
             let images = []
 
-            if (Array.isArray(item.dokumentasi)) {
-              images = item.dokumentasi
-            } else if (typeof item.dokumentasi === 'string') {
-              try {
-                images = JSON.parse(item.dokumentasi)
-              } catch {
-                images = []
-              }
+            try {
+              images = JSON.parse(item.dokumentasi || '[]')
+            } catch {
+              images = []
             }
 
             const imageParagraphs = []
             let currentImages = []
 
-            for (let index = 0; index < images.length; index++) {
-              const img = images[index]
-              const imgPath = path.join(__dirname, '..', img)
+            images.forEach((img, index) => {
+              /**
+               * 🔑 FIX UTAMA:
+               * pastikan path SELALU ke /uploads
+               */
+              const cleanPath = img.replace(/^\/?uploads/, '')
+              const imgPath = path.join(process.cwd(), 'uploads', cleanPath)
 
-              let imageBuffer = null
-
-              /* ====== LOGIC LAMA (FILE SYSTEM) ====== */
               if (fs.existsSync(imgPath)) {
-                imageBuffer = fs.readFileSync(imgPath)
-              } 
-              /* ====== TAMBAHAN AMAN UNTUK RAILWAY ====== */
-              else {
-                try {
-                  const imageUrl = `${process.env.BASE_URL}/${img.replace(/\\/g, '/')}`
-                  const response = await axios.get(imageUrl, {
-                    responseType: 'arraybuffer'
-                  })
-                  imageBuffer = Buffer.from(response.data)
-                } catch (e) {
-                  console.error('Gagal load gambar:', img)
-                }
-              }
-
-              if (imageBuffer) {
                 currentImages.push(
                   new ImageRun({
-                    data: imageBuffer,
+                    data: fs.readFileSync(imgPath),
                     transformation: {
                       width: 180,
                       height: 330
@@ -146,15 +116,17 @@ router.get('/reports/:id/export', async (req, res) => {
               }
 
               if (currentImages.length === 3 || index === images.length - 1) {
-                imageParagraphs.push(
-                  new Paragraph({
-                    children: currentImages,
-                    spacing: { after: 100 }
-                  })
-                )
+                if (currentImages.length > 0) {
+                  imageParagraphs.push(
+                    new Paragraph({
+                      children: currentImages,
+                      spacing: { after: 100 }
+                    })
+                  )
+                }
                 currentImages = []
               }
-            }
+            })
 
             tableRows.push(
               new TableRow({
@@ -176,57 +148,30 @@ router.get('/reports/:id/export', async (req, res) => {
             )
           }
 
-          /* ================= DOKUMEN ================= */
+          /* ================= DOCUMENT ================= */
           const doc = new Document({
             sections: [
               {
-                headers: {
-                  default: headerSection
-                },
+                headers: { default: headerSection },
                 children: [
                   new Paragraph({
                     text: 'Work Completion',
                     alignment: AlignmentType.CENTER,
                     bold: true,
-                    size: 50,
-                    spacing: { after: 200 }
-                  }),
-                  new Paragraph({
-                    text: 'for',
-                    alignment: AlignmentType.CENTER,
-                    bold: true,
-                    size: 50,
-                    spacing: { after: 300 }
+                    size: 50
                   }),
 
-                  new Paragraph(`Customer     : PT. Pertamina Hulu Rokan`),
-                  new Paragraph(`Project        : ${report.judul_laporan}`),
-                  new Paragraph(`Location     : -`),
+                  new Paragraph(`Project : ${report.judul_laporan}`),
                   new Paragraph(
                     `Working Date : ${formatTanggal(report.tanggal_kerja)}`
                   ),
-                  new Paragraph(`Contract No  : -`),
-                  new Paragraph(`Ticket No    : SPHR00304A`),
-                  new Paragraph({ text: '', spacing: { after: 200 } }),
 
                   new Table({
-                    width: {
-                      size: 100,
-                      type: WidthType.PERCENTAGE
-                    },
+                    width: { size: 100, type: WidthType.PERCENTAGE },
                     rows: tableRows
                   }),
 
-                  new Paragraph({
-                    children: [new PageBreak()]
-                  }),
-
-                  new Paragraph({
-                    text:
-                      '\nThe undersigned certify that the scope of work and services is complete and acceptable ' +
-                      'under the terms of agreement with only the exceptions noted above.',
-                    spacing: { after: 300 }
-                  }),
+                  new Paragraph({ children: [new PageBreak()] }),
 
                   new Paragraph({
                     alignment: AlignmentType.CENTER,
