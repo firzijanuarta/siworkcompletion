@@ -27,9 +27,12 @@ function formatTanggal(tanggal) {
   })
 }
 
-// ===== AMBIL GAMBAR VIA URL (PALING STABIL DI RAILWAY) =====
+// ✅ AMBIL GAMBAR LANGSUNG DARI CLOUDINARY URL
 async function getImageBuffer(url) {
-  const res = await axios.get(url, { responseType: 'arraybuffer' })
+  const res = await axios.get(url, {
+    responseType: 'arraybuffer',
+    timeout: 15000
+  })
   return Buffer.from(res.data)
 }
 
@@ -55,26 +58,7 @@ router.get('/reports/:id/export', async (req, res) => {
           }
 
           /* ================= HEADER ================= */
-          let headerImage
-          try {
-            const headerUrl = `${process.env.BASE_URL}/assets/header.png`
-            const headerBuffer = await getImageBuffer(headerUrl)
-
-            headerImage = new Header({
-              children: [
-                new Paragraph({
-                  children: [
-                    new ImageRun({
-                      data: headerBuffer,
-                      transformation: { width: 340, height: 77 }
-                    })
-                  ]
-                })
-              ]
-            })
-          } catch {
-            headerImage = new Header({ children: [] })
-          }
+          const header = new Header({ children: [] })
 
           /* ================= TABEL DETAIL ================= */
           const tableRows = []
@@ -98,44 +82,57 @@ router.get('/reports/:id/export', async (req, res) => {
               } catch {
                 images = []
               }
+            } else if (Array.isArray(item.dokumentasi)) {
+              images = item.dokumentasi
             }
 
             const imageParagraphs = []
-            let currentImages = []
+            let rowImages = []
 
             for (let i = 0; i < images.length; i++) {
               try {
-                const imgUrl = `${process.env.BASE_URL}/${images[i].replace(/\\/g, '/')}`
-                const imgBuffer = await getImageBuffer(imgUrl)
+                // 🔥 PAKAI URL CLOUDINARY APA ADANYA
+                const imgBuffer = await getImageBuffer(images[i])
 
-                currentImages.push(
+                rowImages.push(
                   new ImageRun({
                     data: imgBuffer,
-                    transformation: { width: 180, height: 330 }
+                    transformation: {
+                      width: 160,
+                      height: 220
+                    }
                   })
                 )
 
-                if (currentImages.length === 3 || i === images.length - 1) {
+                // max 3 gambar per baris
+                if (rowImages.length === 3 || i === images.length - 1) {
                   imageParagraphs.push(
                     new Paragraph({
-                      children: currentImages,
-                      spacing: { after: 100 }
+                      children: rowImages,
+                      spacing: { after: 150 }
                     })
                   )
-                  currentImages = []
+                  rowImages = []
                 }
-              } catch {
-                // skip image error, jangan crash
+              } catch (e) {
+                console.log('❌ GAGAL LOAD IMAGE:', images[i])
               }
             }
 
             tableRows.push(
               new TableRow({
                 children: [
-                  new TableCell({ children: [new Paragraph(item.nomor.toString())] }),
-                  new TableCell({ children: [new Paragraph(item.deskripsi)] }),
                   new TableCell({
-                    children: imageParagraphs.length ? imageParagraphs : [new Paragraph('-')]
+                    children: [new Paragraph(String(item.nomor))]
+                  }),
+                  new TableCell({
+                    children: [new Paragraph(item.deskripsi || '-')]
+                  }),
+                  new TableCell({
+                    children:
+                      imageParagraphs.length > 0
+                        ? imageParagraphs
+                        : [new Paragraph('-')]
                   })
                 ]
               })
@@ -146,30 +143,24 @@ router.get('/reports/:id/export', async (req, res) => {
           const doc = new Document({
             sections: [
               {
-                headers: { default: headerImage },
+                headers: { default: header },
                 children: [
                   new Paragraph({
                     text: 'Work Completion',
                     alignment: AlignmentType.CENTER,
                     bold: true,
-                    size: 50,
+                    size: 48,
                     spacing: { after: 200 }
                   }),
-                  new Paragraph({
-                    text: 'for',
-                    alignment: AlignmentType.CENTER,
-                    bold: true,
-                    size: 50,
-                    spacing: { after: 300 }
-                  }),
 
-                  new Paragraph(`Customer     : PT. Pertamina Hulu Rokan`),
-                  new Paragraph(`Project        : ${report.judul_laporan}`),
-                  new Paragraph(`Location     : -`),
-                  new Paragraph(`Working Date : ${formatTanggal(report.tanggal_kerja)}`),
-                  new Paragraph(`Contract No  : -`),
-                  new Paragraph(`Ticket No    : SPHR00304A`),
-                  new Paragraph({ text: '', spacing: { after: 200 } }),
+                  new Paragraph({
+                    text: `Project : ${report.judul_laporan}`,
+                    spacing: { after: 100 }
+                  }),
+                  new Paragraph({
+                    text: `Working Date : ${formatTanggal(report.tanggal_kerja)}`,
+                    spacing: { after: 200 }
+                  }),
 
                   new Table({
                     width: { size: 100, type: WidthType.PERCENTAGE },
@@ -180,8 +171,7 @@ router.get('/reports/:id/export', async (req, res) => {
 
                   new Paragraph({
                     text:
-                      'The undersigned certify that the scope of work and services is complete and acceptable.',
-                    spacing: { after: 300 }
+                      'The undersigned certify that the scope of work and services is complete and acceptable.'
                   })
                 ]
               }
