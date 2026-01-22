@@ -1,5 +1,11 @@
 const BASE_URL = 'https://siworkcompletion-production.up.railway.app'
 
+// 🔥 GANTI DENGAN DATA CLOUDINARY KAMU
+const CLOUDINARY_UPLOAD_URL =
+  'https://api.cloudinary.com/v1_1/ISI_CLOUD_NAME/image/upload'
+const CLOUDINARY_UPLOAD_PRESET = 'ISI_UPLOAD_PRESET'
+
+// =========================
 document.addEventListener('DOMContentLoaded', () => {
   const user = localStorage.getItem('user')
   if (!user) {
@@ -7,47 +13,39 @@ document.addEventListener('DOMContentLoaded', () => {
     return
   }
 
-document.getElementById('logoutBtn').addEventListener('click', () => {
-  Swal.fire({
-    title: 'Logout?',
-    text: 'Anda akan keluar dari sistem',
-    icon: 'question',
-    showCancelButton: true,
-    confirmButtonText: 'Logout',
-    cancelButtonText: 'Batal'
-  }).then(result => {
-    if (result.isConfirmed) {
-      localStorage.removeItem('user')
-      window.location.href = 'login.html'
-    }
+  document.getElementById('logoutBtn').addEventListener('click', () => {
+    Swal.fire({
+      title: 'Logout?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Logout'
+    }).then(r => {
+      if (r.isConfirmed) {
+        localStorage.removeItem('user')
+        window.location.href = 'login.html'
+      }
+    })
   })
-})
 
   const params = new URLSearchParams(window.location.search)
   const reportId = params.get('report_id')
-
-  if (!reportId) {
-    alert('laporan tidak ditemukan')
-    window.location.href = 'dashboard.html'
-    return
-  }
+  if (!reportId) return
 
   loadReport(reportId)
   loadDetails(reportId)
 
   const form = document.getElementById('detailForm')
-  const errorMsg = document.getElementById('errorMsg')
   const fileInput = document.getElementById('dokumentasi')
   const previewContainer = document.getElementById('previewContainer')
   const fileCount = document.getElementById('fileCount')
-  const cancelBtn = document.getElementById('cancelBtn')
+  const errorMsg = document.getElementById('errorMsg')
 
-  // ===== PREVIEW GAMBAR FORM =====
+  // ===== PREVIEW =====
   fileInput.addEventListener('change', () => {
     previewContainer.innerHTML = ''
     const files = fileInput.files
 
-    if (files.length === 0) {
+    if (!files.length) {
       fileCount.textContent = 'Belum ada gambar dipilih'
       return
     }
@@ -55,120 +53,121 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
     fileCount.textContent = `${files.length} gambar dipilih`
 
     Array.from(files).forEach(file => {
-      const reader = new FileReader()
-      reader.onload = e => {
-        const img = document.createElement('img')
-        img.src = e.target.result
-        img.className = 'thumb'
-        previewContainer.appendChild(img)
-      }
-      reader.readAsDataURL(file)
+      const img = document.createElement('img')
+      img.src = URL.createObjectURL(file)
+      img.className = 'thumb'
+      previewContainer.appendChild(img)
     })
-  })
-
-  // ===== BATAL =====
-  cancelBtn.addEventListener('click', () => {
-    form.reset()
-    previewContainer.innerHTML = ''
-    fileCount.textContent = 'Belum ada gambar dipilih'
-    errorMsg.textContent = ''
   })
 
   // ===== SUBMIT =====
   form.addEventListener('submit', async e => {
     e.preventDefault()
+    errorMsg.textContent = ''
 
     const deskripsi = document.getElementById('deskripsi').value
     const files = fileInput.files
 
-    if (files.length === 0) {
-      errorMsg.textContent = 'minimal upload 1 gambar'
+    if (!files.length) {
+      errorMsg.textContent = 'Minimal 1 gambar'
       return
     }
 
-    const formData = new FormData()
-    formData.append('deskripsi', deskripsi)
-
-    for (const file of files) {
-      formData.append('dokumentasi', file)
-    }
-
     try {
-      const res = await fetch(
-        `${BASE_URL}/api/reports/${reportId}/details`,
-        { method: 'POST', body: formData }
-      )
+      Swal.fire({
+        title: 'Upload...',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+      })
 
-      const data = await res.json()
+      // 🔥 UPLOAD KE CLOUDINARY
+      const imageUrls = []
 
-      if (!res.ok) {
-        errorMsg.textContent = data.message
-        return
+      for (const file of files) {
+        const fd = new FormData()
+        fd.append('file', file)
+        fd.append('upload_preset', CLOUDINARY_UPLOAD_PRESET)
+
+        const res = await fetch(CLOUDINARY_UPLOAD_URL, {
+          method: 'POST',
+          body: fd
+        })
+
+        const data = await res.json()
+        if (!data.secure_url) throw new Error('Upload gagal')
+
+        imageUrls.push(data.secure_url)
       }
 
+      // 🔥 KIRIM KE BACKEND (JSON, BUKAN FILE)
+      const res = await fetch(
+        `${BASE_URL}/api/reports/${reportId}/details`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            deskripsi,
+            dokumentasi: imageUrls
+          })
+        }
+      )
+
+      if (!res.ok) throw new Error('Gagal simpan detail')
+
+      Swal.close()
       form.reset()
       previewContainer.innerHTML = ''
       fileCount.textContent = 'Belum ada gambar dipilih'
-      errorMsg.textContent = ''
       loadDetails(reportId)
-    } catch {
-      errorMsg.textContent = 'server tidak merespon'
+    } catch (err) {
+      Swal.close()
+      errorMsg.textContent = err.message || 'Server error'
     }
   })
 })
 
-// =======================
+// =========================
 
 function loadReport(id) {
   fetch(`${BASE_URL}/api/reports/${id}`)
-    .then(res => res.json())
-    .then(data => {
-      document.getElementById('judulLaporan').textContent = data.judul_laporan
+    .then(r => r.json())
+    .then(d => {
+      document.getElementById('judulLaporan').textContent =
+        d.judul_laporan
       document.getElementById('tanggalLaporan').textContent =
-        'Tanggal: ' + data.tanggal_kerja
+        'Tanggal: ' + d.tanggal_kerja
     })
 }
 
 function loadDetails(id) {
   fetch(`${BASE_URL}/api/reports/${id}/details`)
-    .then(res => res.json())
+    .then(r => r.json())
     .then(data => {
       const tbody = document.getElementById('detailTableBody')
       tbody.innerHTML = ''
 
       data.forEach(item => {
-        let dokumentasi = []
-
-        // 🟢 pertahankan logic lama
-        if (Array.isArray(item.dokumentasi)) {
-          dokumentasi = item.dokumentasi
-        }
-
-        let kolomDokumentasi =
-          '<span class="text-muted">Tidak ada foto</span>'
-
-        if (dokumentasi.length > 0) {
-          kolomDokumentasi = `
-            <div class="doc-grid">
-              ${dokumentasi
-                .map(
-                  img =>
-                    `<img src="${BASE_URL}/${img}" class="thumb">`
-                )
-                .join('')}
-            </div>
-          `
-        }
+        const imgs = Array.isArray(item.dokumentasi)
+          ? item.dokumentasi
+          : []
 
         tbody.innerHTML += `
           <tr>
             <td>${item.nomor}</td>
             <td>${item.deskripsi}</td>
-            <td>${kolomDokumentasi}</td>
             <td>
-              <button 
-                class="btn-danger btn-small"
-                onclick="hapusDetail(${item.id}, ${id})">
+              <div class="doc-grid">
+                ${imgs
+                  .map(
+                    url =>
+                      `<img src="${url}" class="thumb">`
+                  )
+                  .join('')}
+              </div>
+            </td>
+            <td>
+              <button class="btn-danger btn-small"
+                onclick="hapusDetail(${item.id})">
                 Hapus
               </button>
             </td>
@@ -178,44 +177,20 @@ function loadDetails(id) {
     })
 }
 
-
 function hapusDetail(detailId) {
   Swal.fire({
-    title: 'Hapus Detail?',
-    text: 'Apakah anda yakin ingin menghapus baris ini?',
+    title: 'Hapus?',
     icon: 'warning',
     showCancelButton: true,
-    confirmButtonColor: '#ef4444',
-    cancelButtonColor: '#6b7280',
-    confirmButtonText: 'Hapus',
-    cancelButtonText: 'Batal'
-  }).then(result => {
-    if (!result.isConfirmed) return
+    confirmButtonText: 'Hapus'
+  }).then(r => {
+    if (!r.isConfirmed) return
 
     fetch(`${BASE_URL}/api/reports/details/${detailId}`, {
       method: 'DELETE'
+    }).then(() => {
+      const params = new URLSearchParams(window.location.search)
+      loadDetails(params.get('report_id'))
     })
-      .then(res => res.json())
-      .then(() => {
-        // 🔥 langsung refresh tabel (tanpa swal sukses)
-        const params = new URLSearchParams(window.location.search)
-        loadDetails(params.get('report_id'))
-      })
-      .catch(() => {
-        Swal.fire(
-          'Error',
-          'Gagal menghapus detail',
-          'error'
-        )
-      })
   })
 }
-
-
-
-
-
-
-
-
-
