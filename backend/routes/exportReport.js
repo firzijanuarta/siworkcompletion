@@ -28,184 +28,147 @@ function formatTanggal(tanggal) {
   })
 }
 
-router.get('/reports/:id/export', async (req, res) => {
+router.get('/reports/:id/export', (req, res) => {
   const reportId = req.params.id
 
-  db.query(
-    'SELECT * FROM reports WHERE id = ?',
-    [reportId],
-    async (err, reportResult) => {
-      if (err || reportResult.length === 0) {
-        return res.status(404).json({ message: 'Laporan tidak ditemukan' })
-      }
+  db.query('SELECT * FROM reports WHERE id = ?', [reportId], (err, r) => {
+    if (err || !r.length) {
+      return res.status(404).json({ message: 'Laporan tidak ditemukan' })
+    }
 
-      const report = reportResult[0]
+    const report = r[0]
 
-      db.query(
-        'SELECT * FROM report_details WHERE report_id = ? ORDER BY nomor ASC',
-        [reportId],
-        async (err, details) => {
-          if (err) {
-            return res
-              .status(500)
-              .json({ message: 'Gagal mengambil detail laporan' })
-          }
+    db.query(
+      'SELECT * FROM report_details WHERE report_id = ? ORDER BY nomor ASC',
+      [reportId],
+      async (err, details) => {
+        if (err) {
+          return res.status(500).json({ message: 'Detail error' })
+        }
 
-          /* ================= HEADER ================= */
-          const headerSection = new Header({
-            children: [
-              new Paragraph({
-                children: [
-                  new ImageRun({
-                    data: fs.readFileSync(
-                      path.join(
-                        __dirname,
-                        '../../frontend/assets/img/header.png'
-                      )
-                    ),
-                    transformation: { width: 340, height: 77 }
-                  })
-                ]
-              })
-            ]
-          })
+        /* ========= HEADER ========= */
+        const headerPath = path.resolve(
+          __dirname,
+          '../../frontend/assets/img/header.png'
+        )
 
-          /* ================= TABEL ================= */
-          const tableRows = []
-
-          tableRows.push(
-            new TableRow({
+        const header = fs.existsSync(headerPath)
+          ? new Header({
               children: [
-                new TableCell({ children: [new Paragraph('No')] }),
-                new TableCell({ children: [new Paragraph('Deskripsi')] }),
-                new TableCell({ children: [new Paragraph('Dokumentasi')] })
+                new Paragraph({
+                  children: [
+                    new ImageRun({
+                      data: fs.readFileSync(headerPath),
+                      transformation: { width: 340, height: 77 }
+                    })
+                  ]
+                })
               ]
             })
-          )
+          : undefined
 
-          for (const item of details) {
-            let images = []
+        /* ========= TABLE ========= */
+        const rows = []
 
-            try {
-              images = JSON.parse(item.dokumentasi || '[]')
-            } catch {
-              images = []
-            }
+        rows.push(
+          new TableRow({
+            children: [
+              new TableCell({ children: [new Paragraph('No')] }),
+              new TableCell({ children: [new Paragraph('Deskripsi')] }),
+              new TableCell({ children: [new Paragraph('Dokumentasi')] })
+            ]
+          })
+        )
 
-            const imageParagraphs = []
-            let currentImages = []
+        for (const item of details) {
+          let images = []
 
-            images.forEach((img, index) => {
-              /**
-               * 🔑 FIX UTAMA:
-               * pastikan path SELALU ke /uploads
-               */
-              const cleanPath = img.replace(/^\/?uploads/, '')
-              const imgPath = path.join(process.cwd(), 'uploads', cleanPath)
+          try {
+            images = JSON.parse(item.dokumentasi || '[]')
+          } catch {}
 
-              if (fs.existsSync(imgPath)) {
-                currentImages.push(
-                  new ImageRun({
-                    data: fs.readFileSync(imgPath),
-                    transformation: {
-                      width: 180,
-                      height: 330
-                    }
-                  })
-                )
-              }
+          const imgParagraphs = []
 
-              if (currentImages.length === 3 || index === images.length - 1) {
-                if (currentImages.length > 0) {
-                  imageParagraphs.push(
-                    new Paragraph({
-                      children: currentImages,
-                      spacing: { after: 100 }
-                    })
-                  )
-                }
-                currentImages = []
-              }
-            })
+          images.slice(0, 3).forEach(img => {
+            const imgPath = path.resolve(__dirname, '..', img)
 
-            tableRows.push(
-              new TableRow({
-                children: [
-                  new TableCell({
-                    children: [new Paragraph(item.nomor.toString())]
-                  }),
-                  new TableCell({
-                    children: [new Paragraph(item.deskripsi)]
-                  }),
-                  new TableCell({
-                    children:
-                      imageParagraphs.length > 0
-                        ? imageParagraphs
-                        : [new Paragraph('-')]
-                  })
-                ]
-              })
-            )
-          }
-
-          /* ================= DOCUMENT ================= */
-          const doc = new Document({
-            sections: [
-              {
-                headers: { default: headerSection },
-                children: [
+            if (fs.existsSync(imgPath)) {
+              try {
+                imgParagraphs.push(
                   new Paragraph({
-                    text: 'Work Completion',
-                    alignment: AlignmentType.CENTER,
-                    bold: true,
-                    size: 50
-                  }),
-
-                  new Paragraph(`Project : ${report.judul_laporan}`),
-                  new Paragraph(
-                    `Working Date : ${formatTanggal(report.tanggal_kerja)}`
-                  ),
-
-                  new Table({
-                    width: { size: 100, type: WidthType.PERCENTAGE },
-                    rows: tableRows
-                  }),
-
-                  new Paragraph({ children: [new PageBreak()] }),
-
-                  new Paragraph({
-                    alignment: AlignmentType.CENTER,
                     children: [
                       new ImageRun({
-                        data: fs.readFileSync(
-                          path.join(
-                            __dirname,
-                            '../../frontend/assets/img/aprov.png'
-                          )
-                        ),
-                        transformation: {
-                          width: 500,
-                          height: 300
-                        }
+                        data: fs.readFileSync(imgPath),
+                        transformation: { width: 180, height: 330 }
                       })
                     ]
                   })
-                ]
+                )
+              } catch {
+                // skip image, DO NOT crash
               }
-            ]
+            }
           })
 
-          const buffer = await Packer.toBuffer(doc)
-
-          res.setHeader(
-            'Content-Disposition',
-            `attachment; filename=work-completion-${report.id}.docx`
+          rows.push(
+            new TableRow({
+              children: [
+                new TableCell({
+                  children: [new Paragraph(String(item.nomor))]
+                }),
+                new TableCell({
+                  children: [new Paragraph(item.deskripsi)]
+                }),
+                new TableCell({
+                  children:
+                    imgParagraphs.length > 0
+                      ? imgParagraphs
+                      : [new Paragraph('-')]
+                })
+              ]
+            })
           )
-          res.send(buffer)
         }
-      )
-    }
-  )
+
+        /* ========= DOC ========= */
+        const doc = new Document({
+          sections: [
+            {
+              headers: header ? { default: header } : {},
+              children: [
+                new Paragraph({
+                  text: 'Work Completion',
+                  alignment: AlignmentType.CENTER,
+                  bold: true,
+                  size: 50
+                }),
+
+                new Paragraph(`Project : ${report.judul_laporan}`),
+                new Paragraph(
+                  `Working Date : ${formatTanggal(report.tanggal_kerja)}`
+                ),
+
+                new Table({
+                  width: { size: 100, type: WidthType.PERCENTAGE },
+                  rows
+                }),
+
+                new Paragraph({ children: [new PageBreak()] })
+              ]
+            }
+          ]
+        })
+
+        const buffer = await Packer.toBuffer(doc)
+
+        res.setHeader(
+          'Content-Disposition',
+          `attachment; filename=work-completion-${report.id}.docx`
+        )
+        res.end(buffer)
+      }
+    )
+  })
 })
 
 module.exports = router
