@@ -1,8 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const db = require('../config/db')
-const fs = require('fs')
-const path = require('path')
+const axios = require('axios')
 
 const {
   Document,
@@ -28,147 +27,178 @@ function formatTanggal(tanggal) {
   })
 }
 
-router.get('/reports/:id/export', (req, res) => {
+// ===== AMBIL GAMBAR VIA URL (PALING STABIL DI RAILWAY) =====
+async function getImageBuffer(url) {
+  const res = await axios.get(url, { responseType: 'arraybuffer' })
+  return Buffer.from(res.data)
+}
+
+router.get('/reports/:id/export', async (req, res) => {
   const reportId = req.params.id
 
-  db.query('SELECT * FROM reports WHERE id = ?', [reportId], (err, r) => {
-    if (err || !r.length) {
-      return res.status(404).json({ message: 'Laporan tidak ditemukan' })
-    }
+  db.query(
+    'SELECT * FROM reports WHERE id = ?',
+    [reportId],
+    async (err, reportResult) => {
+      if (err || reportResult.length === 0) {
+        return res.status(404).json({ message: 'Laporan tidak ditemukan' })
+      }
 
-    const report = r[0]
+      const report = reportResult[0]
 
-    db.query(
-      'SELECT * FROM report_details WHERE report_id = ? ORDER BY nomor ASC',
-      [reportId],
-      async (err, details) => {
-        if (err) {
-          return res.status(500).json({ message: 'Detail error' })
-        }
+      db.query(
+        'SELECT * FROM report_details WHERE report_id = ? ORDER BY nomor ASC',
+        [reportId],
+        async (err, details) => {
+          if (err) {
+            return res.status(500).json({ message: 'Gagal mengambil detail laporan' })
+          }
 
-        /* ========= HEADER ========= */
-        const headerPath = path.resolve(
-          __dirname,
-          '../../frontend/assets/img/header.png'
-        )
+          /* ================= HEADER ================= */
+          let headerImage
+          try {
+            const headerUrl = `${process.env.BASE_URL}/assets/header.png`
+            const headerBuffer = await getImageBuffer(headerUrl)
 
-        const header = fs.existsSync(headerPath)
-          ? new Header({
+            headerImage = new Header({
               children: [
                 new Paragraph({
                   children: [
                     new ImageRun({
-                      data: fs.readFileSync(headerPath),
+                      data: headerBuffer,
                       transformation: { width: 340, height: 77 }
                     })
                   ]
                 })
               ]
             })
-          : undefined
+          } catch {
+            headerImage = new Header({ children: [] })
+          }
 
-        /* ========= TABLE ========= */
-        const rows = []
+          /* ================= TABEL DETAIL ================= */
+          const tableRows = []
 
-        rows.push(
-          new TableRow({
-            children: [
-              new TableCell({ children: [new Paragraph('No')] }),
-              new TableCell({ children: [new Paragraph('Deskripsi')] }),
-              new TableCell({ children: [new Paragraph('Dokumentasi')] })
-            ]
-          })
-        )
-
-        for (const item of details) {
-          let images = []
-
-          try {
-            images = JSON.parse(item.dokumentasi || '[]')
-          } catch {}
-
-          const imgParagraphs = []
-
-          images.slice(0, 3).forEach(img => {
-            const imgPath = path.resolve(__dirname, '..', img)
-
-            if (fs.existsSync(imgPath)) {
-              try {
-                imgParagraphs.push(
-                  new Paragraph({
-                    children: [
-                      new ImageRun({
-                        data: fs.readFileSync(imgPath),
-                        transformation: { width: 180, height: 330 }
-                      })
-                    ]
-                  })
-                )
-              } catch {
-                // skip image, DO NOT crash
-              }
-            }
-          })
-
-          rows.push(
+          tableRows.push(
             new TableRow({
               children: [
-                new TableCell({
-                  children: [new Paragraph(String(item.nomor))]
-                }),
-                new TableCell({
-                  children: [new Paragraph(item.deskripsi)]
-                }),
-                new TableCell({
-                  children:
-                    imgParagraphs.length > 0
-                      ? imgParagraphs
-                      : [new Paragraph('-')]
-                })
+                new TableCell({ children: [new Paragraph({ text: 'No', bold: true })] }),
+                new TableCell({ children: [new Paragraph({ text: 'Deskripsi', bold: true })] }),
+                new TableCell({ children: [new Paragraph({ text: 'Dokumentasi', bold: true })] })
               ]
             })
           )
-        }
 
-        /* ========= DOC ========= */
-        const doc = new Document({
-          sections: [
-            {
-              headers: header ? { default: header } : {},
-              children: [
-                new Paragraph({
-                  text: 'Work Completion',
-                  alignment: AlignmentType.CENTER,
-                  bold: true,
-                  size: 50
-                }),
+          for (const item of details) {
+            let images = []
 
-                new Paragraph(`Project : ${report.judul_laporan}`),
-                new Paragraph(
-                  `Working Date : ${formatTanggal(report.tanggal_kerja)}`
-                ),
-
-                new Table({
-                  width: { size: 100, type: WidthType.PERCENTAGE },
-                  rows
-                }),
-
-                new Paragraph({ children: [new PageBreak()] })
-              ]
+            if (typeof item.dokumentasi === 'string') {
+              try {
+                images = JSON.parse(item.dokumentasi)
+              } catch {
+                images = []
+              }
             }
-          ]
-        })
 
-        const buffer = await Packer.toBuffer(doc)
+            const imageParagraphs = []
+            let currentImages = []
 
-        res.setHeader(
-          'Content-Disposition',
-          `attachment; filename=work-completion-${report.id}.docx`
-        )
-        res.end(buffer)
-      }
-    )
-  })
+            for (let i = 0; i < images.length; i++) {
+              try {
+                const imgUrl = `${process.env.BASE_URL}/${images[i].replace(/\\/g, '/')}`
+                const imgBuffer = await getImageBuffer(imgUrl)
+
+                currentImages.push(
+                  new ImageRun({
+                    data: imgBuffer,
+                    transformation: { width: 180, height: 330 }
+                  })
+                )
+
+                if (currentImages.length === 3 || i === images.length - 1) {
+                  imageParagraphs.push(
+                    new Paragraph({
+                      children: currentImages,
+                      spacing: { after: 100 }
+                    })
+                  )
+                  currentImages = []
+                }
+              } catch {
+                // skip image error, jangan crash
+              }
+            }
+
+            tableRows.push(
+              new TableRow({
+                children: [
+                  new TableCell({ children: [new Paragraph(item.nomor.toString())] }),
+                  new TableCell({ children: [new Paragraph(item.deskripsi)] }),
+                  new TableCell({
+                    children: imageParagraphs.length ? imageParagraphs : [new Paragraph('-')]
+                  })
+                ]
+              })
+            )
+          }
+
+          /* ================= DOKUMEN ================= */
+          const doc = new Document({
+            sections: [
+              {
+                headers: { default: headerImage },
+                children: [
+                  new Paragraph({
+                    text: 'Work Completion',
+                    alignment: AlignmentType.CENTER,
+                    bold: true,
+                    size: 50,
+                    spacing: { after: 200 }
+                  }),
+                  new Paragraph({
+                    text: 'for',
+                    alignment: AlignmentType.CENTER,
+                    bold: true,
+                    size: 50,
+                    spacing: { after: 300 }
+                  }),
+
+                  new Paragraph(`Customer     : PT. Pertamina Hulu Rokan`),
+                  new Paragraph(`Project        : ${report.judul_laporan}`),
+                  new Paragraph(`Location     : -`),
+                  new Paragraph(`Working Date : ${formatTanggal(report.tanggal_kerja)}`),
+                  new Paragraph(`Contract No  : -`),
+                  new Paragraph(`Ticket No    : SPHR00304A`),
+                  new Paragraph({ text: '', spacing: { after: 200 } }),
+
+                  new Table({
+                    width: { size: 100, type: WidthType.PERCENTAGE },
+                    rows: tableRows
+                  }),
+
+                  new Paragraph({ children: [new PageBreak()] }),
+
+                  new Paragraph({
+                    text:
+                      'The undersigned certify that the scope of work and services is complete and acceptable.',
+                    spacing: { after: 300 }
+                  })
+                ]
+              }
+            ]
+          })
+
+          const buffer = await Packer.toBuffer(doc)
+
+          res.setHeader(
+            'Content-Disposition',
+            `attachment; filename=work-completion-${report.id}.docx`
+          )
+          res.send(buffer)
+        }
+      )
+    }
+  )
 })
 
 module.exports = router
