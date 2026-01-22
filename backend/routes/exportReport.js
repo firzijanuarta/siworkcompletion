@@ -98,8 +98,8 @@ router.get('/reports/:id/export', async (req, res) => {
                   new ImageRun({
                     data: imgBuffer,
                     transformation: {
-                      width: 160,
-                      height: 220
+                      width: 165,
+                      height: 250
                     }
                   })
                 )
@@ -109,7 +109,7 @@ router.get('/reports/:id/export', async (req, res) => {
                   imageParagraphs.push(
                     new Paragraph({
                       children: rowImages,
-                      spacing: { after: 150 }
+                      spacing: { after: 50 }
                     })
                   )
                   rowImages = []
