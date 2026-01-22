@@ -1,3 +1,6 @@
+// ================= CONFIG =================
+const BASE_URL = 'https://siworkcompletion-production.up.railway.app'
+
 document.addEventListener('DOMContentLoaded', () => {
   // ===== login guard =====
   const user = localStorage.getItem('user')
@@ -47,7 +50,7 @@ const rowsPerPage = 15
 
 /* ================= FETCH ================= */
 function loadReports() {
-  fetch('http://localhost:3000/api/reports')
+  fetch(`${BASE_URL}/api/reports`)
     .then(res => res.json())
     .then(data => {
       reports = data
@@ -95,7 +98,6 @@ function renderPagination() {
 
   if (totalPages <= 1) return
 
-  // Prev
   const prevBtn = document.createElement('button')
   prevBtn.textContent = 'Prev'
   prevBtn.disabled = currentPage === 1
@@ -106,7 +108,6 @@ function renderPagination() {
   }
   paginationEl.appendChild(prevBtn)
 
-  // Page Numbers
   for (let i = 1; i <= totalPages; i++) {
     const btn = document.createElement('button')
     btn.textContent = i
@@ -121,7 +122,6 @@ function renderPagination() {
     paginationEl.appendChild(btn)
   }
 
-  // Next
   const nextBtn = document.createElement('button')
   nextBtn.textContent = 'Next'
   nextBtn.disabled = currentPage === totalPages
@@ -143,7 +143,7 @@ function goTambah() {
 }
 
 function exportReport(id) {
-  window.open(`http://localhost:3000/api/reports/${id}/export`, '_blank')
+  window.open(`${BASE_URL}/api/reports/${id}/export`, '_blank')
 }
 
 /* ================= DELETE ================= */
@@ -159,7 +159,7 @@ function hapusReport(id) {
     cancelButtonText: 'Batal'
   }).then(result => {
     if (result.isConfirmed) {
-      fetch(`http://localhost:3000/api/reports/${id}`, { method: 'DELETE' })
+      fetch(`${BASE_URL}/api/reports/${id}`, { method: 'DELETE' })
         .then(res => res.json())
         .then(data => {
           Swal.fire({

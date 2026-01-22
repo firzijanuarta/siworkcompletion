@@ -1,3 +1,5 @@
+const BASE_URL = 'https://siworkcompletion-production.up.railway.app'
+
 document.addEventListener('DOMContentLoaded', () => {
   const user = localStorage.getItem('user')
   if (!user) {
@@ -93,7 +95,7 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
 
     try {
       const res = await fetch(
-        `http://localhost:3000/api/reports/${reportId}/details`,
+        `${BASE_URL}/api/reports/${reportId}/details`,
         { method: 'POST', body: formData }
       )
 
@@ -118,7 +120,7 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
 // =======================
 
 function loadReport(id) {
-  fetch(`http://localhost:3000/api/reports/${id}`)
+  fetch(`${BASE_URL}/api/reports/${id}`)
     .then(res => res.json())
     .then(data => {
       document.getElementById('judulLaporan').textContent = data.judul_laporan
@@ -128,7 +130,7 @@ function loadReport(id) {
 }
 
 function loadDetails(id) {
-  fetch(`http://localhost:3000/api/reports/${id}/details`)
+  fetch(`${BASE_URL}/api/reports/${id}/details`)
     .then(res => res.json())
     .then(data => {
       const tbody = document.getElementById('detailTableBody')
@@ -151,7 +153,7 @@ function loadDetails(id) {
               ${dokumentasi
                 .map(
                   img =>
-                    `<img src="http://localhost:3000/${img}" class="thumb">`
+                    `<img src="${BASE_URL}/${img}" class="thumb">`
                 )
                 .join('')}
             </div>
@@ -190,7 +192,7 @@ function hapusDetail(detailId) {
   }).then(result => {
     if (!result.isConfirmed) return
 
-    fetch(`http://localhost:3000/api/reports/details/${detailId}`, {
+    fetch(`${BASE_URL}/api/reports/details/${detailId}`, {
       method: 'DELETE'
     })
       .then(res => res.json())
