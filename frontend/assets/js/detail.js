@@ -1,11 +1,11 @@
 const BASE_URL = 'https://siworkcompletion-production.up.railway.app'
 
-// 🔥 GANTI DENGAN DATA CLOUDINARY KAMU
+// ✅ CLOUDINARY CONFIG (FINAL)
+const CLOUD_NAME = 'dxz92pmhr'
+const CLOUDINARY_UPLOAD_PRESET = 'kp_upload'
 const CLOUDINARY_UPLOAD_URL =
-  'https://api.cloudinary.com/v1_1/ISI_CLOUD_NAME/image/upload'
-const CLOUDINARY_UPLOAD_PRESET = 'ISI_UPLOAD_PRESET'
+  `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`
 
-// =========================
 document.addEventListener('DOMContentLoaded', () => {
   const user = localStorage.getItem('user')
   if (!user) {
@@ -40,7 +40,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const fileCount = document.getElementById('fileCount')
   const errorMsg = document.getElementById('errorMsg')
 
-  // ===== PREVIEW =====
   fileInput.addEventListener('change', () => {
     previewContainer.innerHTML = ''
     const files = fileInput.files
@@ -60,7 +59,6 @@ document.addEventListener('DOMContentLoaded', () => {
     })
   })
 
-  // ===== SUBMIT =====
   form.addEventListener('submit', async e => {
     e.preventDefault()
     errorMsg.textContent = ''
@@ -93,14 +91,21 @@ document.addEventListener('DOMContentLoaded', () => {
           body: fd
         })
 
+        if (!res.ok) {
+          throw new Error('Upload ke Cloudinary gagal')
+        }
+
         const data = await res.json()
-        if (!data.secure_url) throw new Error('Upload gagal')
+
+        if (!data.secure_url) {
+          throw new Error('Response Cloudinary tidak valid')
+        }
 
         imageUrls.push(data.secure_url)
       }
 
-      // 🔥 KIRIM KE BACKEND (JSON, BUKAN FILE)
-      const res = await fetch(
+      // 🔥 SIMPAN KE BACKEND
+      const saveRes = await fetch(
         `${BASE_URL}/api/reports/${reportId}/details`,
         {
           method: 'POST',
@@ -112,7 +117,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       )
 
-      if (!res.ok) throw new Error('Gagal simpan detail')
+      if (!saveRes.ok) {
+        throw new Error('Gagal menyimpan detail ke server')
+      }
 
       Swal.close()
       form.reset()
@@ -125,8 +132,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   })
 })
-
-// =========================
 
 function loadReport(id) {
   fetch(`${BASE_URL}/api/reports/${id}`)
@@ -158,10 +163,7 @@ function loadDetails(id) {
             <td>
               <div class="doc-grid">
                 ${imgs
-                  .map(
-                    url =>
-                      `<img src="${url}" class="thumb">`
-                  )
+                  .map(url => `<img src="${url}" class="thumb">`)
                   .join('')}
               </div>
             </td>
